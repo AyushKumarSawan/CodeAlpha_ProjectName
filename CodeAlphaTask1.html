@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple E-Commerce Store</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .product-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .product {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      padding: 15px;
+      width: 220px;
+      text-align: center;
+    }
+    .product img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .cart-view, .detail-view {
+      display: none;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 10px;
+      cursor: pointer;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+    }
+    ul {
+      list-style: none;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#" onclick="showHome()">Home</a>
+    <a href="#" onclick="showCart()">Cart</a>
+  </nav>
+
+  <div id="home-view">
+    <h1>Product Listing</h1>
+    <div class="product-grid" id="product-list"></div>
+  </div>
+
+  <div id="detail-view" class="detail-view">
+    <h2 id="detail-name"></h2>
+    <img id="detail-image" width="250" />
+    <p id="detail-description"></p>
+    <p>Price: ₹<span id="detail-price"></span></p>
+    <button onclick="addToCart(currentProduct.id)">Add to Cart</button>
+    <br><br>
+    <button onclick="showHome()">Back to Home</button>
+  </div>
+
+  <div id="cart-view" class="cart-view">
+    <h2>Your Cart</h2>
+    <ul id="cart-items"></ul>
+    <p>Total: ₹<span id="cart-total">0</span></p>
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <script>
+    const products = [
+      {
+        id: 1,
+        name: "Wireless Mouse",
+        price: 799,
+        description: "Ergonomic wireless mouse with USB receiver.",
+        image: "https://via.placeholder.com/200x150?text=Mouse"
+      },
+      {
+        id: 2,
+        name: "Gaming Keyboard",
+        price: 1299,
+        description: "RGB mechanical gaming keyboard.",
+        image: "https://via.placeholder.com/200x150?text=Keyboard"
+      },
+      {
+        id: 3,
+        name: "Headphones",
+        price: 999,
+        description: "Over-ear wireless headphones with noise cancellation.",
+        image: "https://via.placeholder.com/200x150?text=Headphones"
+      }
+    ];
+
+    let currentProduct = {};
+
+    function renderProducts() {
+      const list = document.getElementById('product-list');
+      list.innerHTML = '';
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <img src="${p.image}">
+          <h3>${p.name}</h3>
+          <p>₹${p.price}</p>
+          <button onclick="viewDetail(${p.id})">View Details</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function viewDetail(id) {
+      const product = products.find(p => p.id === id);
+      currentProduct = product;
+      document.getElementById('detail-name').textContent = product.name;
+      document.getElementById('detail-image').src = product.image;
+      document.getElementById('detail-description').textContent = product.description;
+      document.getElementById('detail-price').textContent = product.price;
+      showSection('detail-view');
+    }
+
+    function addToCart(id) {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[id] = (cart[id] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert('Added to cart!');
+    }
+
+    function showCart() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      const list = document.getElementById('cart-items');
+      const totalEl = document.getElementById('cart-total');
+      list.innerHTML = '';
+      let total = 0;
+      for (let id in cart) {
+        const product = products.find(p => p.id == id);
+        const quantity = cart[id];
+        const subtotal = product.price * quantity;
+        const li = document.createElement('li');
+        li.textContent = `${product.name} × ${quantity} = ₹${subtotal}`;
+        list.appendChild(li);
+        total += subtotal;
+      }
+      totalEl.textContent = total;
+      showSection('cart-view');
+    }
+
+    function checkout() {
+      localStorage.removeItem('cart');
+      alert("Order placed successfully!");
+      showHome();
+    }
+
+    function showSection(id) {
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('detail-view').style.display = 'none';
+      document.getElementById('cart-view').style.display = 'none';
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function showHome() {
+      renderProducts();
+      showSection('home-view');
+    }
+
+    window.onload = showHome;
+  </script>
+
+</body>
+</html>
