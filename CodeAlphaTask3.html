@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Trello / Asana Clone</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+    h2 { margin-bottom: 10px; }
+    input, textarea, button {
+      padding: 8px;
+      margin: 5px;
+      font-size: 14px;
+    }
+    .board {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .project {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    .task {
+      background: #e8f0fe;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .comments {
+      margin-top: 8px;
+      background: #fff;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    .comment {
+      background: #f9f9f9;
+      padding: 5px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🗂 Project Management Tool (Frontend Demo)</h2>
+
+<input id="projectName" placeholder="Project name">
+<button onclick="createProject()">Create Project</button>
+
+<div class="board" id="projectBoard"></div>
+
+<script>
+  let projects = [];
+  let currentUser = "Ayush";
+
+  function createProject() {
+    const name = document.getElementById('projectName').value;
+    if (!name) return alert("Project name required!");
+    const project = {
+      id: Date.now(),
+      name,
+      tasks: []
+    };
+    projects.push(project);
+    renderProjects();
+    document.getElementById('projectName').value = '';
+  }
+
+  function addTask(projectId, titleInputId, descInputId) {
+    const title = document.getElementById(titleInputId).value;
+    const desc = document.getElementById(descInputId).value;
+    if (!title) return alert("Task title required!");
+
+    const project = projects.find(p => p.id === projectId);
+    project.tasks.push({
+      id: Date.now(),
+      title,
+      description: desc,
+      comments: []
+    });
+    renderProjects();
+  }
+
+  function addComment(projectId, taskId, commentInputId) {
+    const comment = document.getElementById(commentInputId).value;
+    if (!comment) return;
+    const project = projects.find(p => p.id === projectId);
+    const task = project.tasks.find(t => t.id === taskId);
+    task.comments.push({ user: currentUser, text: comment });
+    renderProjects();
+  }
+
+  function renderProjects() {
+    const board = document.getElementById("projectBoard");
+    board.innerHTML = '';
+    projects.forEach(project => {
+      const div = document.createElement("div");
+      div.className = "project";
+
+      let html = <h3>${project.name}</h3>;
+      html += `
+        <input id="title-${project.id}" placeholder="Task title"><br>
+        <textarea id="desc-${project.id}" placeholder="Task description"></textarea><br>
+        <button onclick="addTask(${project.id}, 'title-${project.id}', 'desc-${project.id}')">Add Task</button>
+        <hr>
+      `;
+
+      project.tasks.forEach(task => {
+        html += `
+          <div class="task">
+            <b>${task.title}</b><br>
+            <small>${task.description}</small>
+            <div class="comments">
+              ${task.comments.map(c => <div class="comment"><b>${c.user}:</b> ${c.text}</div>).join("")}
+              <input id="comment-${task.id}" placeholder="Add comment...">
+              <button onclick="addComment(${project.id}, ${task.id}, 'comment-${task.id}')">Comment</button>
+            </div>
+          </div>
+        `;
+      });
+
+      div.innerHTML = html;
+      board.appendChild(div);
+    });
+  }
+</script>
+
+</body>
+</html>
