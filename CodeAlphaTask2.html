@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mini Social Media App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #app { max-width: 700px; margin: auto; }
+    .post, .comment, .profile { border: 1px solid #ccc; padding: 10px; margin-top: 15px; }
+    input, textarea { width: 100%; margin-top: 5px; padding: 5px; }
+    button { margin-top: 5px; padding: 5px 10px; }
+    .small { font-size: 0.8em; color: #555; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <h1>Mini Social Media Platform</h1>
+
+  <!-- LOGIN/SIGNUP -->
+  <div id="auth">
+    <h3>Signup</h3>
+    <input id="signup-username" placeholder="Username" />
+    <input id="signup-password" placeholder="Password" type="password" />
+    <button onclick="signup()">Signup</button>
+
+    <h3>Login</h3>
+    <input id="login-username" placeholder="Username" />
+    <input id="login-password" placeholder="Password" type="password" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main" class="hidden">
+    <p>Welcome, <b id="current-user"></b>! <button onclick="logout()">Logout</button></p>
+
+    <!-- POST CREATION -->
+    <textarea id="new-post" placeholder="What's on your mind?"></textarea>
+    <button onclick="createPost()">Post</button>
+
+    <!-- FEED -->
+    <h2>Feed</h2>
+    <div id="feed"></div>
+  </div>
+</div>
+
+<script>
+  const db = {
+    users: JSON.parse(localStorage.getItem("users") || "[]"),
+    posts: JSON.parse(localStorage.getItem("posts") || "[]")
+  };
+
+  let currentUser = localStorage.getItem("currentUser");
+
+  function saveDB() {
+    localStorage.setItem("users", JSON.stringify(db.users));
+    localStorage.setItem("posts", JSON.stringify(db.posts));
+    if (currentUser) localStorage.setItem("currentUser", currentUser);
+  }
+
+  function signup() {
+    const username = document.getElementById("signup-username").value.trim();
+    const password = document.getElementById("signup-password").value.trim();
+    if (!username || !password) return alert("Fill all fields.");
+    if (db.users.find(u => u.username === username)) return alert("User already exists.");
+
+    db.users.push({ username, password, followers: [], following: [] });
+    saveDB();
+    alert("Signup successful. Now login.");
+  }
+
+  function login() {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value.trim();
+    const user = db.users.find(u => u.username === username && u.password === password);
+    if (!user) return alert("Invalid credentials.");
+    currentUser = username;
+    saveDB();
+    renderApp();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem("currentUser");
+    renderApp();
+  }
+
+  function createPost() {
+    const content = document.getElementById("new-post").value.trim();
+    if (!content) return alert("Write something.");
+    db.posts.unshift({ id: Date.now(), author: currentUser, content, likes: [], comments: [] });
+    document.getElementById("new-post").value = "";
+    saveDB();
+    renderFeed();
+  }
+
+  function likePost(id) {
+    const post = db.posts.find(p => p.id === id);
+    if (!post.likes.includes(currentUser)) post.likes.push(currentUser);
+    saveDB();
+    renderFeed();
+  }
+
+  function commentPost(id) {
+    const text = prompt("Your comment:");
+    if (!text) return;
+    const post = db.posts.find(p => p.id === id);
+    post.comments.push({ user: currentUser, text });
+    saveDB();
+    renderFeed();
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById("feed");
+    feed.innerHTML = "";
+    db.posts.forEach(post => {
+      const div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = `
+        <p><b>${post.author}</b>: ${post.content}</p>
+        <button onclick="likePost(${post.id})">Like (${post.likes.length})</button>
+        <button onclick="commentPost(${post.id})">Comment</button>
+        <div class="small">Comments:</div>
+        ${post.comments.map(c => <div class="comment"><b>${c.user}</b>: ${c.text}</div>).join("")}
+      `;
+      feed.appendChild(div);
+    });
+  }
+
+  function renderApp() {
+    const auth = document.getElementById("auth");
+    const main = document.getElementById("main");
+    if (currentUser) {
+      document.getElementById("current-user").innerText = currentUser;
+      auth.classList.add("hidden");
+      main.classList.remove("hidden");
+      renderFeed();
+    } else {
+      auth.classList.remove("hidden");
+      main.classList.add("hidden");
+    }
+  }
+
+  // Initial Render
+  renderApp();
+</script>
+</body>
+</html>
